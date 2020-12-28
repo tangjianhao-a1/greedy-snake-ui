@@ -1,8 +1,25 @@
 <template>
   <div id="app">
+    <!-- 游戏按钮  -->
+
+    <div style="text-align: center; height: 30px; margin-top: 50px">
+      <button v-if="!starting" @click="startGame">开始游戏</button>
+      <button v-else @click="stopGame">暂停游戏</button>
+      <button @click="refresh">重新开始</button>
+    </div>
+
+    <!-- 棋盘盒子 -->
+
     <div
-      style="border: 1px solid black; height: fit-content; width: fit-content;"
+      style="
+        border: 1px solid black;
+        height: fit-content;
+        width: fit-content;
+        margin: 0px auto;
+      "
     >
+      <!-- 横纵格子 -->
+
       <div v-for="y of checkerboardSize.height" :key="y + refreshTimes">
         <span
           v-for="x of checkerboardSize.width"
@@ -60,8 +77,6 @@ export default {
   mounted() {
     //绑定键盘事件
     document.onkeydown = this.onKeyDown;
-    //定时刷新页面，500ms一次
-    setInterval(this.refreshView, 500);
   },
   data() {
     return {
@@ -78,35 +93,62 @@ export default {
        */
       snakeBodyPointList: [
         {
-          x: 10,
-          y: 10,
+          x: 3,
+          y: 3,
         },
         {
-          x: 10,
-          y: 11,
+          x: 3,
+          y: 4,
         },
         {
-          x: 11,
-          y: 11,
+          x: 3,
+          y: 5,
         },
       ],
       /**
        * 苹果的坐标
        */
       applePoint: {
-        x: 15,
-        y: 14,
+        x: 1,
+        y: 1,
       },
       /**
        * 棋盘的大小
        */
       checkerboardSize: {
-        width: 20,
-        height: 20,
+        width: 30,
+        height: 30,
       },
+      /**
+       * 定时器
+       */
+      timer: {},
+      /**
+       * 按钮控制
+       */
+      starting: false,
     };
   },
   methods: {
+    /**
+     * 开始游戏
+     */
+    startGame() {
+      this.starting = true;
+      this.timer = setInterval(() => {
+        this.refreshView();
+        this.add_snack();
+        this.commit_suicide();
+        this.collision();
+      }, 500);
+    },
+    /**
+     * 暂停游戏
+     */
+    stopGame() {
+      clearInterval(this.timer);
+      this.starting = false;
+    },
     /**
      * 计算蛇身第二节在蛇头的位置
      */
@@ -176,6 +218,7 @@ export default {
         this.snakeBodyPointList[0].x++;
       }
     },
+
     /**
      * 获取坐标 x,y所在位置的空间类型
      * @param x 横坐标
@@ -219,30 +262,138 @@ export default {
       }
       return "empty_zone";
     },
+    /**
+     * 食物随机刷新，蛇身加长
+     */
+    add_snack() {
+      //判断食物和蛇头是否重叠
+
+      let isApple =
+        this.snakeBodyPointList[0].x == this.applePoint.x &&
+        this.snakeBodyPointList[0].y == this.applePoint.y;
+
+      if (isApple) {
+       
+       /* 刷新食物 */
+        this.change_APPle();
+
+        //接触食物后蛇身增加
+
+        let snack_body = {
+          x: this.snakeBodyPointList[0].x,
+          y: this.snakeBodyPointList[0].y,
+        };
+        this.snakeBodyPointList.unshift(snack_body);
+      }
+    },
+
+    /**
+     * 蛇头触碰到自身，游戏结束
+     */
+    commit_suicide() {
+      let snack_head = {
+        x: this.snakeBodyPointList[0].x,
+        y: this.snakeBodyPointList[0].y,
+      };
+      this.snakeBodyPointList.some((item, index) => {
+        if (snack_head.x === item.x && snack_head.y === item.y && index > 2) {
+          clearInterval(this.timer);
+          alert("自杀了！哥！！！！！");
+          this.refresh();
+        }
+      });
+    },
+
+    /**
+     * 随机食物刷新点
+     */
+    change_APPle() {
+      //随机生成食物x，y坐标  并赋值
+      this.applePoint.x = this.random(1, this.checkerboardSize.width);
+      this.applePoint.y = this.random(1, this.checkerboardSize.height);
+
+      /**
+       * 如果食物刷新到蛇身上
+       */
+      let isSome = this.snakeBodyPointList.some(
+        (value) =>
+          this.applePoint.x === value.x && this.applePoint.y === value.y
+      );
+
+      //重新刷新
+      if (isSome) this.change_APPle();
+    },
+
+    /**
+     * Math对象函数封装
+     */
+    random(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+    /**
+     * 定义重新刷新页面
+     */
+    refresh() {
+      location.reload();
+    },
+    /**
+     * 撞墙游戏结束
+     */
+    collision() {
+      let end =
+        this.snakeBodyPointList[0].x <= 0 ||
+        this.snakeBodyPointList[0].x > this.checkerboardSize.width ||
+        this.snakeBodyPointList[0].y <= 0 ||
+        this.snakeBodyPointList[0].y > this.checkerboardSize.height;
+      if (end) {
+        clearInterval(this.timer);
+        alert("眼睛拿来干嘛的！撞墙额");
+        this.refresh();
+      }
+    },
   },
 };
 </script>
 
 <style>
+/* 每个小格子样式 */
+
 .zone {
-  width: 30px;
-  height: 30px;
-  border: 1px solid black;
+  width: 20px;
+  height: 20px;
   display: table-cell;
 }
+
+/* 空白地样式 */
+
 .empty_zone {
   background-color: white;
 }
+
+/* 蛇头样式*/
 
 .snake_header_zone {
   background-color: green;
 }
 
+/* 生身样式 */
+
 .snake_body_zone {
   background-color: black;
 }
 
+/* 食物样式 */
+
 .apple_zone {
   background-color: red;
+  border-radius: 10px;
+}
+
+/* 按钮样式 */
+
+button {
+  outline: none;
+  height: 30px;
+  margin-left: 5px;
 }
 </style>
