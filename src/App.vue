@@ -280,10 +280,10 @@ export default {
         //接触食物后蛇身增加
 
         let snack_body = {
-          x: this.snakeBodyPointList[0].x,
-          y: this.snakeBodyPointList[0].y,
+          x: this.snakeBodyPointList[2].x,
+          y: this.snakeBodyPointList[2].y,
         };
-        this.snakeBodyPointList.unshift(snack_body);
+        this.snakeBodyPointList.push(snack_body);
       }
     },
 
@@ -362,6 +362,7 @@ export default {
   width: 20px;
   height: 20px;
   display: table-cell;
+  border: 1px solid pink;
 }
 
 /* 空白地样式 */
@@ -394,6 +395,6 @@ export default {
 button {
   outline: none;
   height: 30px;
-  margin-left: 5px;
+  margin-left: 5px
 }
 </style>
